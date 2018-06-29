@@ -3,15 +3,79 @@ package mysqlcon;
 import java.sql.*;
 import java.util.Properties;
 import java.util.Scanner;
-public class MySQlCon {
-    private static final String dbClassName = "com.mysql.jdbc.Driver";
-    private static final String CONNECTION ="jdbc:mysql://127.0.0.1/java";
+
+class DbCon{
+    private final String dbClassName = "com.mysql.jdbc.Driver";
+    private final String CONNECTION ="jdbc:mysql://127.0.0.1/java";
+    private Connection c = null;
+    private Statement st = null;
+    private ResultSet rs = null;
+    protected String tablename = null;
+    protected String var1,var2 = null;
+    protected String var3,var4 = null;
+    public void DbActivity(String name,String subject,long roll, long phone,int num){
+        try {
+            Class.forName(dbClassName);
+            Properties p = new Properties();
+            p.put("user","root");
+            p.put("password","");
+            c = DriverManager.getConnection(CONNECTION,p);
+            st = c.createStatement();
+            switch(num){
+                case 1: 
+                    System.out.println("\nSaving data:-");
+                    st.executeUpdate("INSERT INTO "+tablename+" ("+var1+","+var2+","+var3+","+var4+")"+
+                       "VALUES('"+roll+"','"+name+"','"+subject+"','"+phone+"')");
+                    break;
+
+                case 2://printing everything from the database
+                    rs = st.executeQuery("SELECT * from "+tablename);
+                    System.out.print("\nPrinting from database:-\n");
+                    while(rs.next()){
+                        int id = rs.getInt(var1);
+                        String names = rs.getString(var2);
+                        String subjects = rs.getString(var3);
+                        int phone_no = rs.getInt(var4);
+                        System.out.println(id+"\t"+names+"\t  "+subjects+"  \t"+phone_no);
+                    }
+                    break;
+                    
+                case 3://update the database
+                    System.out.print("\nUpdating the table:-");
+                    st.executeUpdate("UPDATE studentInfo SET subject='science' WHERE roll in (45)");
+                    System.out.print("\nUpdation completed");
+                    break;
+            }
+            
+            
+        } 
+        catch (ClassNotFoundException e) {
+            System.out.println("Exception: "+e);
+        }
+        catch(SQLException e){
+            System.out.println("Can not connect to the database...: "+e);
+        }
+        catch(Exception e){
+            System.out.println("Exception: "+e);
+        }
+        finally{
+            if(c != null){
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                    System.out.println("Connection can not be ade free: "+e);
+                }
+            }
+        }
+    }
+}
+class StudentInfo extends DbCon{
     private String name;
     private String subject;
     private long roll,phone;
-    Scanner sc = new Scanner(System.in);
     
-    void studentInfo(){
+    Scanner sc = new Scanner(System.in);
+    public void inputInfo(){
         System.out.print("\nEnter the name:-");
         name = sc.nextLine();
         System.out.print("\nEnter the roll:-");
@@ -20,53 +84,123 @@ public class MySQlCon {
         subject = sc.nextLine();
         System.out.print("\nEnter the phone no:-");
         phone = sc.nextLong();
+        var1="roll";
+        var2="name";
+        var3="subject";
+        var4="phone";
+        super.tablename="studentInfo";
+        super.DbActivity(name, subject, roll, phone,1);
         
     }
+    public void displayData(){
+        var1="roll";
+        var2="name";
+        var3="subject";
+        var4="phone";
+        super.tablename="studentInfo";
+        super.DbActivity(null, null, 0, 0, 2);
+    }
+    public void updataData(){
+        super.tablename="studentInfo";
+        super.DbActivity(null, null, 0, 0, 3);
+    }
+}
+
+class CompanyInfo extends DbCon{
+    private String companyname;
+    private String companyaddress;
+    private long pincode;
+    private long phone;
     
-    public static void main(String[] args) throws ClassNotFoundException,SQLException {
-        int num;
-        Scanner sc = new Scanner(System.in);
-        MySQlCon obj =new MySQlCon();
-        Class.forName(dbClassName);
-        Properties p = new Properties();
-        p.put("user","root");
-        p.put("password","");
-        Connection c = DriverManager.getConnection(CONNECTION,p);
-        Statement st = c.createStatement();
+    Scanner sc = new Scanner(System.in);
+    public void inputInfo(){
+        System.out.print("\nEnter the company name:-");
+        companyname = sc.nextLine();
+        System.out.print("\nEnter the company address:-");
+        companyaddress = sc.nextLine();
+        System.out.print("\nEnter the pincode:-");
+        pincode = sc.nextLong();
+        System.out.print("\nEnter the phone no:-");
+        phone = sc.nextLong();
+        
+        var1="pincode";
+        var2="companyname";
+        var3="companyaddress";
+        var4="phone";
+        super.tablename="companyInfo";
+        super.DbActivity(companyname, companyaddress, pincode, phone,1);
+    }
+    public void displayData(){
+        var1="pincode";
+        var2="companyname";
+        var3="companyaddress";
+        var4="phone";
+        super.tablename="companyInfo";
+        super.DbActivity(null, null, 0, 0, 2);
+    }
+}
+
+
+public class MySQlCon {
+    private int num;
+    Scanner sc = new Scanner(System.in);
+    public void enterStudentInfo(){
+        StudentInfo s = new StudentInfo();
         do{
             System.out.print("\n1)Enter data\n2)Display data\n3)Update\n4)Exit");
             System.out.print("\nEnter your option:-");
             num = sc.nextInt();
-
             switch(num){
-                case 1:obj.studentInfo();
-                    //Inserting data into database
-                    st.executeUpdate("INSERT INTO `studentInfo` (roll,name,subject,phone)"+
-                           "VALUES('"+obj.roll+"','"+obj.name+"','"+obj.subject+"','"+obj.phone+"')");
+                case 1:
+                    s.inputInfo();
                     break;
 
-                case 2://printing everything from the database
-                    ResultSet rs = st.executeQuery("SELECT * from studentInfo");
-                    System.out.print("\nPrinting from database:-\n");
-                    System.out.println("id  name    subject    phone");
-                    while(rs.next()){
-                        int id = rs.getInt("roll");
-                        String name = rs.getString("name");
-                        String subject = rs.getString("subject");
-                        int phone = rs.getInt("phone");
-                        System.out.println(id+"   "+name+"    "+subject+"    "+phone);
-                    }
+                case 2:
+                    s.displayData();
                     break;
                     
-                case 3://update the database
-                    System.out.print("\nUpdating the table:-");
-                    
-                    st.executeUpdate("UPDATE studentInfo SET subject='english' WHERE roll in (45)");
-                    System.out.print("\nUpdation completed");
+                case 3:
+                    s.updataData();
                     break;
             }
         }while(num!=4);
-        c.close();
+    }
+    public void enterCompanyInfo(){
+        CompanyInfo obj = new CompanyInfo();
+        do{
+            System.out.print("\n1)Enter data\n2)Display data\n3)Exit");
+            System.out.print("\nEnter your option:-");
+            num = sc.nextInt();
+            switch(num){
+                case 1:
+                    obj.inputInfo();
+                    break;
+
+                case 2:
+                    obj.displayData();
+                    break;
+            }
+        }while(num!=4);
+    }
+    
+    public static void main(String[] args) throws ClassNotFoundException,SQLException {
+        int num;
+        MySQlCon m = new MySQlCon();
+        Scanner sc = new Scanner(System.in);
+        do{
+            System.out.print("\n1)Enter student data\n2Enter company data\n3)Exit");
+            System.out.print("\nEnter your option:-");
+            num = sc.nextInt();
+            switch(num){
+                case 1:
+                    m.enterStudentInfo();
+                    break;
+
+                case 2:
+                    m.enterCompanyInfo();
+                    break;
+            }
+        }while(num!=3);
     }
     
 }
